@@ -1,4 +1,4 @@
 # Web-App
 ## Run with Docker
-docker build -t cc.web-app .
-docker run -it --rm -p 8080:8080 cc.web-app
+docker pull ghcr.io/cc23-team4-5/wep-app:latest
+docker run -it --rm -p 8080:8080 docker pull ghcr.io/cc23-team4-5/wep-app:latest
