@@ -18,11 +18,13 @@
             <div class="col-6 mb-3">
                 <label for="task-description" class="form-label text-center d-block fw-bold">Task Description</label>
                 <textarea class="form-control task-description" id="task-description" rows="2">{{ task_description }}</textarea>
+                <button id="next-task" class="btn btn-secondary">Next Task</button>
             </div>
             <div class="col-6 mb-3 position-relative">
                 <label for="additional-info" class="form-label text-center d-block fw-bold">Additional Info</label>
                 <textarea class="form-control additional-info foggy" id="additional-info" rows="2">{{ additional_info }}</textarea>
-                <button id="unfog-button" class="btn btn-secondary position-absolute bottom=0 end=0">Unfog</button>
+                <button id="next-info" class="btn btn-secondary">Next Info</button>
+                <button id="unfog-button" class="btn btn-secondary position-absolute bottom-0 end-0">Unfog</button>
             </div>
         </div>
         <div class="mb-3">
