@@ -18,7 +18,9 @@ function unfog() {
 
 function nextTask() {
     $.get("/next_task", function (data) {
+        $("#microtask-name").text(data.microtask_name);
         $("#task-description").val(data.task_description);
+        $("#additional-info").val(data.additional_info);
         $("#text-input").val('');  // Clear the text input field
         if (answers[data.task_description]) {  // If an answer for this task has been submitted before
             $("#text-input").val(answers[data.task_description]);  // Load the previously submitted answer
@@ -26,15 +28,8 @@ function nextTask() {
     });
 }
 
-function nextInfo() {
-    $.get("/next_info", function (data) {
-        $("#additional-info").val(data.additional_info);
-    });
-}
-
 $(document).ready(function () {
     $("#submit-button").on("click", submit);
     $("#unfog-button").on("click", unfog);
     $("#next-task").on("click", nextTask);
-    $("#next-info").on("click", nextInfo);
 });

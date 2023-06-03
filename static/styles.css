@@ -77,6 +77,11 @@ label {
     background-color: #f95959;
 }
 
+#exit-button {
+    margin-right: 10%;
+    background-color: #f95959;
+}
+
 #next-task {
     padding: 2.5px 10px;
     margin-top: 3%;
@@ -90,3 +95,27 @@ label {
     right: 200px;
     background-color: #8F8176;
 }
+
+.logout-container {
+    height: 130%;  /* Increase the height */
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.logout-title {
+    font-size: 1.5rem;  /* Decrease the font size */
+    font-weight: bold;
+}
+
+.white-box {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;  /* Center the text */
+}
+
+.questionnaire-url {
+    font-weight: bold;  /* Make the text bold */
+}
+

@@ -15,6 +15,7 @@ conn = pymssql.connect(server='cc23-team4-5-mssql-server.database.windows.net', 
 cursor = conn.cursor()
 
 MODEL_SERVICE_URL = os.environ.get("MODEL_HOST", "http://localhost:8081")
+MICROTASK_NAMES = deque([("Extract"), ("Produce"), ("Verify")])
 
 task_descriptions = deque()
 additional_infos = deque()
@@ -44,6 +45,14 @@ def login():
         return "User not found", 400
     return render_template("login.html")
 
+@app.route("/logout")
+def logout():
+    user_id = session.get("user_id")
+    cursor.execute("SELECT questionare_url FROM users WHERE user_id=%s", user_id)
+    url = cursor.fetchone()[0]
+    session.clear()  # Clear the session
+    return render_template("logout.html", user_id=user_id, url=url)
+
 @app.route("/")
 def index():
     if "user_id" not in session:
@@ -51,17 +60,18 @@ def index():
 
     task_description = task_descriptions[0][2]
     additional_info = additional_infos[0][2]
-    return render_template("index.html", task_description=task_description, additional_info=additional_info)
+    microtask_name = MICROTASK_NAMES[0]
+    return render_template("index.html", task_description=task_description, additional_info=additional_info, microtask_name=microtask_name)
 
 @app.route("/next_task")
 def next_task():
     task_descriptions.rotate(-1)
-    return jsonify({"task_description": task_descriptions[0][2]})
-
-@app.route("/next_info")
-def next_info():
     additional_infos.rotate(-1)
-    return jsonify({"additional_info": additional_infos[0][2]})
+    MICROTASK_NAMES.rotate(-1)
+    print(task_descriptions[0][2], additional_infos[0][2], MICROTASK_NAMES[0])
+    return jsonify({"task_description": task_descriptions[0][2], 
+                    "additional_info": additional_infos[0][2],
+                    "microtask_name": MICROTASK_NAMES[0]})
 
 @app.route("/submit", methods=["POST"])
 def submit():
