@@ -1,11 +1,18 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import os
-import requests
+import pymssql
 import csv
 from collections import deque
 
 app = Flask(__name__)
 app.secret_key = 'your secret key'
+
+CC23_DB_USERNAME = os.getenv('CC23_DB_USERNAME')
+CC23_DB_PASSWORD = os.getenv('CC23_DB_PASSWORD')
+
+# Connect to SQL Server
+conn = pymssql.connect(server='cc23-team4-5-mssql-server.database.windows.net', user='{}@cc23-team4-5-mssql-server'.format(CC23_DB_USERNAME), password=CC23_DB_PASSWORD, database='cc23-team4-5-mssql-database')
+cursor = conn.cursor()
 
 MODEL_SERVICE_URL = os.environ.get("MODEL_HOST", "http://localhost:8081")
 
@@ -15,28 +22,25 @@ additional_infos = deque()
 @app.route("/login", methods=["GET", "POST"])
 def login():
     global task_descriptions, additional_infos
+    
+    task_descriptions.clear()
+    additional_infos.clear()
 
     if request.method == "POST":
         user_id = request.form.get("user_id")
-        with open('./data/users.csv', 'r') as file:
-            reader = csv.reader(file, delimiter=';')
-            next(reader)  # Skip the header row
-            for row in reader:
-                if row[0] == user_id:
-                    session["user_id"] = user_id
-                    session["task_description_file"] = row[1].strip()
-                    session["additional_info_file"] = row[2].strip()
-                    
-                    # Pick appropriate user-files
-                    with open(session["task_description_file"], 'r') as file:
-                        reader = csv.reader(file, delimiter=';')
-                        task_descriptions = deque(list(reader))
 
-                    with open(session["additional_info_file"], 'r') as file:
-                        reader = csv.reader(file, delimiter=';')
-                        additional_infos = deque(list(reader))
+        cursor.execute("SELECT user_id FROM users WHERE user_id=%s", user_id)
+        user = cursor.fetchone()    
+        
+        if user:
+            session["user_id"] = user[0]
 
-                    return redirect(url_for("index"))
+            cursor.execute("SELECT task_id, user_id, task_description FROM task_descriptions WHERE user_id=%s", user_id)
+            task_descriptions.extend(cursor.fetchall())
+            cursor.execute("SELECT info_id, user_id, additional_info FROM additional_info WHERE user_id=%s", user_id)
+            additional_infos.extend(cursor.fetchall())
+
+            return redirect(url_for("index"))
         return "User not found", 400
     return render_template("login.html")
 
@@ -44,54 +48,41 @@ def login():
 def index():
     if "user_id" not in session:
         return redirect(url_for("login"))
-    with open(session["task_description_file"], 'r') as file:
-        reader = csv.reader(file, delimiter=';')
-        task_description = next(reader)[0]
-    with open(session["additional_info_file"], 'r') as file:
-        reader = csv.reader(file, delimiter=';')
-        additional_info = next(reader)[0]
+
+    task_description = task_descriptions[0][2]
+    additional_info = additional_infos[0][2]
     return render_template("index.html", task_description=task_description, additional_info=additional_info)
 
 @app.route("/next_task")
 def next_task():
     task_descriptions.rotate(-1)
-    print(task_descriptions)
-    return jsonify({"task_description": task_descriptions[0][0]})
+    return jsonify({"task_description": task_descriptions[0][2]})
 
 @app.route("/next_info")
 def next_info():
     additional_infos.rotate(-1)
-    return jsonify({"additional_info": additional_infos[0][0]})
+    return jsonify({"additional_info": additional_infos[0][2]})
 
 @app.route("/submit", methods=["POST"])
 def submit():
     review = request.form.get("review") 
     if not review:
         return jsonify({"error": "Review is empty."}), 400
-    
-    task_description = task_descriptions[0][0]
+
     user_id = session["user_id"]
-    output_file = f'./data/user_data/{user_id}/user_output.csv'
+    task_id = task_descriptions[0][0]
 
-    # Read existing records
-    with open(output_file, 'r', newline='') as file:
-        reader = csv.reader(file)
-        records = list(reader)
+    cursor.execute("""
+        MERGE INTO user_answers AS Target
+        USING (SELECT %s as user_id, %s as task_id) AS Source
+        ON Target.user_id = Source.user_id AND Target.task_id = Source.task_id
+        WHEN MATCHED THEN
+            UPDATE SET user_answer = %s
+        WHEN NOT MATCHED THEN
+            INSERT (user_id, task_id, user_answer) VALUES (Source.user_id, Source.task_id, %s);
+        """, (user_id, task_id, review, review))
+    conn.commit()
 
-    # Update the relevant record
-    for record in records:
-        if record[0] == user_id and record[1] == task_description:
-            record[2] = review
-            break
-    else:
-        # If no existing record was found, add a new one
-        records.append([user_id, task_description, review])
-
-    # Write all records back to the file
-    with open(output_file, 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerows(records)
-    
     return jsonify({"message": "Success"}), 200
 
 if __name__ == "__main__":
