@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import os
 import pymssql
-import csv
 from collections import deque
 
 app = Flask(__name__)
