@@ -19,6 +19,8 @@ MICROTASK_NAMES = deque([("Extract"), ("Produce"), ("Verify")])
 task_descriptions = deque()
 additional_infos = deque()
 
+user_answers = {}
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     global task_descriptions, additional_infos
@@ -40,6 +42,13 @@ def login():
             cursor.execute("SELECT info_id, user_id, additional_info FROM additional_info WHERE user_id=%s", user_id)
             additional_infos.extend(cursor.fetchall())
 
+            cursor.execute("SELECT task_id, user_id, user_answer FROM user_answers WHERE user_id=%s", user_id)
+            answers = cursor.fetchall()
+
+            # populate the user_answers dictionary with fetched data
+            for answer in answers:
+                user_answers[answer[0]] = answer[2]
+
             return redirect(url_for("index"))
         return "User not found", 400
     return render_template("login.html")
@@ -57,20 +66,26 @@ def index():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+    microtask_name = MICROTASK_NAMES[0]
+    task_id = task_descriptions[0][0]
     task_description = task_descriptions[0][2]
     additional_info = additional_infos[0][2]
-    microtask_name = MICROTASK_NAMES[0]
-    return render_template("index.html", task_description=task_description, additional_info=additional_info, microtask_name=microtask_name)
+    user_answer = user_answers.get(task_id, '')
+
+    return render_template("index.html", task_description=task_description, additional_info=additional_info, microtask_name=microtask_name, user_answer=user_answer)
 
 @app.route("/next_task")
 def next_task():
     task_descriptions.rotate(-1)
     additional_infos.rotate(-1)
     MICROTASK_NAMES.rotate(-1)
+    task_id = task_descriptions[0][0]
+    user_answer = user_answers.get(task_id, '')
     print(task_descriptions[0][2], additional_infos[0][2], MICROTASK_NAMES[0])
     return jsonify({"task_description": task_descriptions[0][2], 
                     "additional_info": additional_infos[0][2],
-                    "microtask_name": MICROTASK_NAMES[0]})
+                    "microtask_name": MICROTASK_NAMES[0],
+                    "user_answer": user_answer})
 
 @app.route("/submit", methods=["POST"])
 def submit():

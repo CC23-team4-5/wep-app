@@ -9,10 +9,12 @@
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <img src="/static/tu-delft-logo.png" alt="TU Delft" class="logo">
+    <a href="https://www.tudelft.nl/en/" target="_blank">
+        <img src="/static/tu-delft-logo.png" alt="TU Delft" class="logo">
+    </a>
     <div class="team-name smaller-right">cc23-team4-5</div>
     <div class="container mt-5 logout-container">
-        <h1 class="text-center mb-4 logout-title">Thank you,  User {{ user_id }},  for your participation in the experiment</h1>
+        <h1 class="text-center mb-4 logout-title">Thank you, User {{ user_id }}, for your participation in the experiment</h1>
         <div class="row justify-content-center">
             <div class="col-6 mb-3 white-box">
                 <label for="questionnaire-url" class="form-label text-center d-block fw-bold">Questionnaire URL</label>
@@ -27,4 +29,3 @@
     <script src="/static/scripts.js"></script>
 </body>
 </html>
-
