@@ -65,6 +65,12 @@ def logout():
 def index():
     if "user_id" not in session:
         return redirect(url_for("login"))
+    
+    print('Microtask names: ', MICROTASK_NAMES)
+    print('-' * 50)
+    print('Task descriptions: ', task_descriptions)
+    print('-' * 50)
+    print('Additional infos: ', additional_infos)
 
     microtask_name = MICROTASK_NAMES[0]
     task_id = task_descriptions[0][0]
