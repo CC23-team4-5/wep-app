@@ -4,12 +4,17 @@ body {
 }
 
 .container {
-    max-width: 720px; /* 20% larger */
+    max-width: 90%; /* 20% larger */
     background-color: #FAF8F4;
     border-radius: 15px;
-    padding: 20px;
+    padding: 30px;
     box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-    margin: 0 auto;
+    
+}
+
+#main-container {
+    margin-top: 10%;
+    margin-bottom: 5%;
 }
 
 .logo {
@@ -43,16 +48,28 @@ label {
     color: #333;
 }
 
-.task-description, .additional-info {
-    height: 80px; /* 20% larger */
+.task-description {
+    height: 380px; /* 20% larger */
     resize: vertical;
+    max-width: 80%;
+}
+
+.additional-info {
+    height: 380px; /* 20% larger */
+    resize: vertical;
+    max-width: 80%;
+}
+
+.original-text {
+    height: 380px; /* 20% larger */
+    resize: vertical;
+    max-width: 90%;
 }
 
 .text-input {
-    width: 80%;
-    height: auto;
+    height: 380px;
     aspect-ratio: 1/1;
-    margin: 0 auto;
+    resize: vertical;
 }
 
 .foggy {
@@ -121,4 +138,11 @@ label {
     font-weight: bold;  /* Make the text bold */
     font-size: 130%;
     color: #1a53ff;
+}
+
+.title-button-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* margin-bottom: 10%; */
 }
