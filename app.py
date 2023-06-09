@@ -21,10 +21,51 @@ additional_infos = deque()
 
 user_answers = {}
 
+@app.route("/extract")
+def extract():
+    return perform_task("Extract")
+
+@app.route("/produce")
+def produce():
+    return perform_task("Produce")
+
+@app.route("/verify")
+def verify():
+    return perform_task("Verify")
+
+def perform_task(task_name):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if MICROTASK_NAMES[0] != task_name:
+        while MICROTASK_NAMES[0] != task_name:
+            task_descriptions.rotate(-1)
+            additional_infos.rotate(-1)
+            MICROTASK_NAMES.rotate(-1)
+
+    print('Microtask names: ', MICROTASK_NAMES)
+    print('-' * 50)
+    print('Task descriptions: ', task_descriptions)
+    print('-' * 50)
+    print('Additional infos: ', additional_infos)
+
+    microtask_name = MICROTASK_NAMES[0]
+    task_id = task_descriptions[0][0]
+    task_description = task_descriptions[0][2]
+    additional_info = additional_infos[0][2]
+    user_answer = user_answers.get(task_id, '')
+
+    if task_name == 'Extract':
+        return render_template("extract.html", task_description=task_description, additional_info=additional_info, microtask_name=microtask_name, user_answer=user_answer)
+    elif task_name == 'Produce':
+        return render_template("produce.html", task_description=task_description, additional_info=additional_info, microtask_name=microtask_name, user_answer=user_answer)
+    else:
+        return render_template("verify.html", task_description=task_description, additional_info=additional_info, microtask_name=microtask_name, user_answer=user_answer)
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     global task_descriptions, additional_infos
-    
+
     task_descriptions.clear()
     additional_infos.clear()
 
@@ -32,8 +73,8 @@ def login():
         user_id = request.form.get("user_id")
 
         cursor.execute("SELECT user_id FROM users WHERE user_id=%s", user_id)
-        user = cursor.fetchone()    
-        
+        user = cursor.fetchone()
+
         if user:
             session["user_id"] = user[0]
 
@@ -45,13 +86,19 @@ def login():
             cursor.execute("SELECT task_id, user_id, user_answer FROM user_answers WHERE user_id=%s", user_id)
             answers = cursor.fetchall()
 
-            # populate the user_answers dictionary with fetched data
             for answer in answers:
                 user_answers[answer[0]] = answer[2]
 
-            return redirect(url_for("index"))
+            redirect_page = int(user_id) % 3
+            if redirect_page == 0:
+                return redirect(url_for("extract"))
+            elif redirect_page == 1:
+                return redirect(url_for("produce"))
+            else:
+                return redirect(url_for("verify"))
         return "User not found", 400
     return render_template("login.html")
+
 
 @app.route("/logout")
 def logout():
@@ -60,6 +107,15 @@ def logout():
     url = cursor.fetchone()[0]
     session.clear()  # Clear the session
     return render_template("logout.html", user_id=user_id, url=url)
+
+
+@app.route("/revoke-consent")
+def revoke_consent():
+    user_id = session.get("user_id")
+    cursor.execute("SELECT questionare_url FROM users WHERE user_id=%s", user_id)
+    url = cursor.fetchone()[0]
+    session.clear()  # Clear the session
+    return render_template("revoked.html", user_id=user_id, url=url)
 
 @app.route("/")
 def index():

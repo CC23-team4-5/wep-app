@@ -15,30 +15,29 @@
     </a>
     <div class="team-name smaller-right">cc23-team4-5</div>
     <div id="main-container" class="container">
+        <div class="text-end mt-3">
+            <a id="revoke-button" href="/revoke-consent" class="btn" style="background-color:purple; font-size: 105%; color: white;">Leave & Revoke Consent</a>
+        </div>
         <h1 id="microtask-name" class="text-center mb-4">{{ microtask_name }}</h1>
         <div class="row justify-content-center">
             <div class="col mb-3">
-                <div class="title-button-container">
-                    <label  for="task-description" class="form-label text-center d-block fw-bold">Task Description</label>
-                </div>
-                <textarea class="form-control task-description" id="task-description" rows="2">{{ task_description }}</textarea>
+                <label for="task-description" class="form-label text-center d-block fw-bold">Task Description</label>
+                <textarea class="form-control task-description" id="task-description" rows="6" style="height: 100%; resize: none;">{{ task_description }}</textarea>
             </div>
             <div class="col mb-3">
-                <label  for="original-text" class="form-label text-center d-block fw-bold">Original Text</label>
-                <textarea class="form-control original-text" id="original-text" rows="2"></textarea>
+                <label for="original-text" class="form-label text-center d-block fw-bold">Original Text</label>
+                <textarea class="form-control original-text" id="original-text" rows="6" style="height: 100%; resize: none;"></textarea>
             </div>
             <div class="col mb-3 position-relative">
-                <div class="title-button-container">
-                    <label  for="additional-info" class="form-label text-center d-block fw-bold">Additional Info</label>
-                </div>
-                <textarea class="form-control additional-info" id="additional-info" rows="2">{{ additional_info }}</textarea>
+                <label for="additional-info" class="form-label text-center d-block fw-bold">Key Features</label>
+                <textarea class="form-control additional-info" id="additional-info" rows="6" style="height: 100%; resize: none;">{{ additional_info }}</textarea>
             </div>
             <div class="col mb-3">
-                <label  for="text-input" class="form-label text-center d-block fw-bold">Text-Input Box</label>
-                <textarea class="form-control text-input smaller" id="text-input" rows="6">{{ user_answer }}</textarea>
+                <label for="text-input" class="form-label text-center d-block fw-bold">Summary</label>
+                <textarea class="form-control text-input" id="text-input" rows="6" style="height: 100%; resize: none;">{{ user_answer }}</textarea>
             </div>
         </div>
-        <div class="text-center">
+        <div class="text-center" style="margin-top: 4.2%;">
             <button id="submit-button" class="btn btn-primary btn-lg submit-button narrower shorter">Submit</button>
         </div>
     </div>
