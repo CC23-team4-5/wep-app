@@ -34,11 +34,11 @@ Write the summary in the 'Key Features' text box.
             </div>
             <div class="col mb-3">
                 <label for="original-text" class="form-label text-center d-block fw-bold">Original Text</label>
-                <textarea class="form-control original-text" id="original-text" rows="6" style="height: 100%; resize: none;"></textarea>
+                <textarea readonly class="form-control original-text" id="original-text" rows="6" style="height: 100%; resize: none;">{{ original_text }}</textarea>
             </div>
             <div class="col mb-3 position-relative">
                 <label for="additional-info" class="form-label text-center d-block fw-bold">Key Features</label>
-                <textarea class="form-control additional-info" id="additional-info" rows="6" style="height: 100%; resize: none;">{{ additional_info }}</textarea>
+                <textarea readonly class="form-control additional-info" id="additional-info" rows="6" style="height: 100%; resize: none;">{{ key_features }}</textarea>
             </div>
             <div class="col mb-3">
                 <label for="text-input" class="form-label text-center d-block fw-bold">Summary</label>
@@ -52,8 +52,27 @@ Write the summary in the 'Key Features' text box.
     <div class="text-end mt-3">
         <a id="exit-button" href="/logout" class="btn btn-danger">Exit Experiment</a>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/umd/bootstrap.min.js"></script>
-    <script src="/static/scripts.js"></script>
-</body>
-</html>
+    <div class="modal" tabindex="-1" id="confirmationModal">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirmation</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p id="modal-text"></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <a href="" id="confirm-action" class="btn btn-primary">Confirm</a>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+      <script src="/static/scripts.js"></script>
+  </body>
+  </html>

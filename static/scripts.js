@@ -1,37 +1,56 @@
 let answers = {};
 var answer = "";
 function submit() {
-    const review = $("#text-input").val();
+    const answer = $("#text-input").val();
+    console.log('=========Answer=========')
+    console.log(answer)
     const task = $("#task-description").val();
-    answers[task] = review;  // Store the answer for this task
-    $.post("/submit", {review: review}, function (data) {
+    answers[task] = answer;  // Store the answer for this task
+    $.post("/submit", {answer: answer}, function (data) {
         console.log(data);
         $("#result").text(data.message);
     }).fail(function () {
         $("#result").text("Error");
     });
 }
-function unfog() {
-    $("#additional-info").removeClass("foggy");
-    $("#unfog-button").prop("disabled", true);
+
+function giveConsent() {
+    window.location.href = '/give-consent';
 }
 
-function nextTask() {
-    $.get("/next_task", function (data) {
-        $("#microtask-name").text(data.microtask_name);
-        $("#task-description").val(data.task_description);
-        $("#additional-info").val(data.additional_info);
-        $("#text-input").val(data.user_answer || '');
-        // answer = data.user_answer;
-        // $("#text-input").val('');  // Clear the text input field
-        if (answers[data.task_description]) {  // If an answer for this task has been submitted before
-            $("#text-input").val(answers[data.task_description]);  // Load the previously submitted answer
+function showConfirmationModal(message, actionUrl) {
+    $("#modal-text").text(message);
+    $("#confirm-action").attr("href", actionUrl);
+    var myModal = new bootstrap.Modal(document.getElementById('confirmationModal'), {});
+    myModal.show();
+}
+
+function checkAllCheckboxes() {
+    let allChecked = true;
+    $('.form-check-input').each(function() {
+        if (!$(this).prop('checked')) {
+            allChecked = false;
+            return false; // breaks the each() loop
         }
     });
+    $('#agree-button').prop('disabled', !allChecked);
 }
 
+
 $(document).ready(function () {
+    $('.form-check-input').change(checkAllCheckboxes);
+    $('#agree-button').click(giveConsent);
+
     $("#submit-button").on("click", submit);
-    $("#unfog-button").on("click", unfog);
-    $("#next-task").on("click", nextTask);
+    
+
+    $("#exit-button").on("click", function(event) {
+        event.preventDefault();
+        showConfirmationModal("Are you sure you want to exit the experiment?", "/logout");
+    });
+    
+    $("#revoke-button").on("click", function(event) {
+        event.preventDefault();
+        showConfirmationModal("Are you sure you want to leave and revoke your consent?", "/revoke-consent");
+    });
 });

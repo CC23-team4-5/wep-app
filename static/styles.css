@@ -34,6 +34,10 @@ body {
     font-family: "Merriweather", serif;
 }
 
+#microtask-name {
+    text-transform: capitalize;
+}
+
 textarea {
     resize: vertical;
     font-size: 120%; /* 20% larger */
