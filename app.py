@@ -117,8 +117,8 @@ def login():
 
             # Fetch Summaries
             cursor.execute(
-                "SELECT summary_id, summary FROM summaries WHERE text_id=%s",
-                session["text_id"],
+                "SELECT summary_id, summary FROM summaries WHERE kf_id=%s",
+                session["kf_id"],
             )
             res = cursor.fetchall()
             idx = randint(0, len(res) - 1)

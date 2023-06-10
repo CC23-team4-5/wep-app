@@ -36,14 +36,24 @@ function checkAllCheckboxes() {
     $('#agree-button').prop('disabled', !allChecked);
 }
 
+function makeNewLines() {
+    var textarea = document.getElementById("textarea");
+    var textareaSummary = document.getElementById("textareaSummary");
+    var text = textarea.value;
+    var textareaSummaryText = textareaSummary.value;
+    text = text.replace(/\\n/g, "\r\n");
+    textareaSummaryText = textareaSummaryText.replace(/\\n/g, "\r\n");
+    textarea.value = text;
+    textareaSummary.value = textareaSummaryText;
+ }
 
 $(document).ready(function () {
     $('.form-check-input').change(checkAllCheckboxes);
     $('#agree-button').click(giveConsent);
-
+    
     $("#submit-button").on("click", submit);
     
-
+    
     $("#exit-button").on("click", function(event) {
         event.preventDefault();
         showConfirmationModal("Are you sure you want to exit the experiment?", "/logout");
@@ -53,4 +63,5 @@ $(document).ready(function () {
         event.preventDefault();
         showConfirmationModal("Are you sure you want to leave and revoke your consent?", "/revoke-consent");
     });
+    makeNewLines();
 });

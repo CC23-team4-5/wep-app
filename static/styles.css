@@ -56,24 +56,36 @@ label {
     height: 380px; /* 20% larger */
     resize: vertical;
     max-width: 80%;
+    color: #333;
 }
 
-.additional-info {
+.key-features {
     height: 380px; /* 20% larger */
     resize: vertical;
-    max-width: 80%;
+    max-width: 85%;
+    color: #333;
+}
+
+.summary {
+    height: 380px; /* 20% larger */
+    resize: none;
+    width: 115%;
+    margin-left: -10%;
+    color: #333;
 }
 
 .original-text {
     height: 380px; /* 20% larger */
-    resize: vertical;
-    max-width: 90%;
+    resize: none;
+    width: 115%;
+    margin-left: -17%;
 }
 
 .text-input {
     height: 380px;
     aspect-ratio: 1/1;
     resize: vertical;
+    color: #333;
 }
 
 .foggy {
