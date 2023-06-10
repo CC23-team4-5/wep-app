@@ -32,7 +32,7 @@ original_texts = {}
 def read_original_texts():
     global original_texts
 
-    for i in range(1, 12):
+    for i in range(1, 23):
         file_path = "./data/original_texts/{}/original_text.txt".format(str(i))
         with open(file_path, "r") as file:
             original_texts[i] = file.read()
