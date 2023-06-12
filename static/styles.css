@@ -111,9 +111,13 @@ label {
 }
 
 #exit-button {
-    margin-top: -15%;
-    margin-right: 10%;
+    /* margin-top: -15%; */
+    /* margin-right: 10%; */
     background-color: #f95959;
+    /* width: 110%; */
+    /* display: flex; */
+    justify-content: space-between;
+    align-items: center;
 }
 
 #next-task {
