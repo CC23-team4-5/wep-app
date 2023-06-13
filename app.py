@@ -9,6 +9,7 @@ app.secret_key = "your secret key"
 
 CC23_DB_USERNAME = os.getenv("CC23_DB_USERNAME")
 CC23_DB_PASSWORD = os.getenv("CC23_DB_PASSWORD")
+EXPERIMENT_TASK_NAME = os.getenv("EXPERIMENT_TASK_NAME")
 
 # Connect to SQL Server
 global conn, cursor
@@ -23,16 +24,17 @@ additional_infos = deque()
 
 original_texts = {}
 
+
 def open_connections():
     global conn, cursor
     app.logger.debug("Opening MSSQL connection")
     conn = pymssql.connect(
-    server="cc23-team4-5-mssql-server.database.windows.net",
-    user="{}@cc23-team4-5-mssql-server".format(CC23_DB_USERNAME),
-    password=CC23_DB_PASSWORD,
-    database="cc23-team4-5-mssql-database",
+        server="cc23-team4-5-mssql-server.database.windows.net",
+        user="{}@cc23-team4-5-mssql-server".format(CC23_DB_USERNAME),
+        password=CC23_DB_PASSWORD,
+        database="cc23-team4-5-mssql-database",
     )
-    
+
     cursor = conn.cursor()
     app.logger.debug("MSSQL connection is opened")
 
@@ -43,9 +45,11 @@ def close_connections():
     conn.close()
     app.logger.debug("MSSQL connection is closed")
 
+
 def clear_user_session():
     session.clear()
     app.logger.info("User session is cleared")
+
 
 def read_original_texts():
     global original_texts
@@ -54,26 +58,26 @@ def read_original_texts():
         file_path = "./data/original_texts/{}/original_text.txt".format(str(i))
         with open(file_path, "r") as file:
             original_texts[i] = file.read()
-    
+
     app.logger.debug("Original texts are read")
 
 
 @app.route("/extract")
 def extract():
     app.logger.debug("Routing to Extract")
-    return perform_task("Extract")
+    return perform_task("extract")
 
 
 @app.route("/produce")
 def produce():
     app.logger.debug("Routing to Produce")
-    return perform_task("Produce")
+    return perform_task("produce")
 
 
 @app.route("/verify")
 def verify():
     app.logger.debug("Routing to Verify")
-    return perform_task("Verify")
+    return perform_task("verify")
 
 
 def perform_task(task_name):
@@ -83,9 +87,13 @@ def perform_task(task_name):
         app.logger.debug("[perform_task] User not in session")
         return redirect(url_for("login"))
 
-    app.logger.info("[perform_task] User {} in session performing task {} on text {}".format(session["user_id"], task_name, session["text_id"]))
+    app.logger.info(
+        "[perform_task] User {} in session performing task {} on text {}".format(
+            session["user_id"], task_name, session["text_id"]
+        )
+    )
 
-    if task_name == "Extract":
+    if task_name == "extract":
         app.logger.debug("[perform_task] template {}".format(task_name))
         return render_template(
             "extract.html",
@@ -93,7 +101,7 @@ def perform_task(task_name):
             original_text=original_texts[session["text_id"]],
             user_answer="User Answer",
         )
-    elif task_name == "Produce":
+    elif task_name == "produce":
         app.logger.debug("[perform_task] template {}".format(task_name))
         return render_template(
             "produce.html",
@@ -122,36 +130,46 @@ def login():
         user_id = request.form.get("user_id")
 
         cursor.execute(
-            "SELECT user_id, task_id, text_id FROM users WHERE user_id=%s", user_id
+            "SELECT text_id FROM users WHERE user_id IS NULL AND task_id=%s", EXPERIMENT_TASK_NAME,
         )
-        user = cursor.fetchone()
+        data = cursor.fetchone()
+        app.logger.debug("Fetched text_id: {}".format(data[0]))
 
-        if user:
+        cursor.execute(
+            "UPDATE users SET user_id=%s WHERE text_id=%s AND task_id=%s", (user_id, data[0], EXPERIMENT_TASK_NAME)
+        )
+        conn.commit()
+        app.logger.info("User {} saved as the candidate for task {} on text {}".format(user_id, EXPERIMENT_TASK_NAME ,data[0]))
+
+
+        if data:
             app.logger.info("User {} logged in".format(user_id))
 
-            session["user_id"] = user[0]
-            session["task_id"] = user[1]
-            session["text_id"] = user[2]
+            session["user_id"] = user_id
+            session["task_id"] = EXPERIMENT_TASK_NAME
+            session["text_id"] = data[0]
 
-            # Fetch Key Features
-            cursor.execute(
-                "SELECT kf_id, key_features FROM key_features WHERE text_id=%s",
-                session["text_id"],
-            )
-            res = cursor.fetchall()
-            idx = randint(0, len(res) - 1)
-            session["kf_id"] = res[idx][0]
-            session["key_features"] = res[idx][1]
+            if session["task_id"] == "produce" or session["task_id"] == "verify":
+                # Fetch Key Features
+                cursor.execute(
+                    "SELECT kf_id, key_features FROM key_features WHERE text_id=%s",
+                    session["text_id"],
+                )
+                res = cursor.fetchone()
+                app.logger.debug("Fetched Key Features: {}".format(res[0]))
+                session["kf_id"] = res[0][0]
+                session["key_features"] = res[0][1]
 
-            # Fetch Summaries
-            cursor.execute(
-                "SELECT summary_id, summary FROM summaries WHERE kf_id=%s",
-                session["kf_id"],
-            )
-            res = cursor.fetchall()
-            idx = randint(0, len(res) - 1)
-            session["summary_id"] = res[idx][0]
-            session["summary"] = res[idx][1]
+            if session["task_id"] == "verify":
+                # Fetch Summaries
+                cursor.execute(
+                    "SELECT summary_id, summary FROM summaries WHERE kf_id=%s",
+                    session["kf_id"],
+                )
+                res = cursor.fetchone()
+                app.logger.debug("Fetched Summary: {}".format(res[0]))
+                session["summary_id"] = res[0][0]
+                session["summary"] = res[0][1]
 
             if "consent_given" not in session:
                 app.logger.info("Redirecting to consent form")
@@ -160,7 +178,7 @@ def login():
             return redirect(url_for(session["task_id"]))
         app.logger.error("User {} not found".format(user_id))
         return "User not found", 400
-    return render_template("login.html")
+    return render_template("login.html", task_name=EXPERIMENT_TASK_NAME)
 
 
 @app.route("/logout")
@@ -196,11 +214,13 @@ def revoke_consent():
     cursor.execute("SELECT revoke_consent_code FROM users WHERE user_id=%s", user_id)
     revoke_consent_code = cursor.fetchone()[0]
     app.logger.debug("Revoke consent code: {}".format(revoke_consent_code))
-    
+
     remove_user_data(session["user_id"])
     clear_user_session()
     close_connections()
-    return render_template("revoked.html", user_id=user_id, revoke_consent_code=revoke_consent_code)
+    return render_template(
+        "revoked.html", user_id=user_id, revoke_consent_code=revoke_consent_code
+    )
 
 
 @app.route("/give-consent")
@@ -226,7 +246,7 @@ def consent_form():
 
 @app.route("/")
 def index():
-    app.logger.info("App Started!")
+    app.logger.info("{} App Started!".format(EXPERIMENT_TASK_NAME))
     open_connections()
     read_original_texts()
 
@@ -269,6 +289,7 @@ def submit():
 
     if session["task_id"] == "extract":
         app.logger.debug("Merging into key_features...")
+        app.logger.warning((session["text_id"], session["user_id"], answer, answer))
         cursor.execute(
             """
             MERGE INTO key_features AS Target
