@@ -56,7 +56,7 @@ $(document).ready(function () {
     
     $("#exit-button").on("click", function(event) {
         event.preventDefault();
-        showConfirmationModal("Are you sure you want to exit the experiment?", "/logout");
+        showConfirmationModal("Are you sure you want to exit the experiment?", "/wyloguj_user");
     });
     
     $("#revoke-button").on("click", function(event) {

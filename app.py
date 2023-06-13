@@ -156,9 +156,9 @@ def login():
                     session["text_id"],
                 )
                 res = cursor.fetchone()
-                app.logger.debug("Fetched Key Features: {}".format(res[0]))
-                session["kf_id"] = res[0][0]
-                session["key_features"] = res[0][1]
+                app.logger.debug("Fetched Key Features: {}".format(res))
+                session["kf_id"] = res[0]
+                session["key_features"] = res[1]
 
             if session["task_id"] == "verify":
                 # Fetch Summaries
@@ -168,8 +168,8 @@ def login():
                 )
                 res = cursor.fetchone()
                 app.logger.debug("Fetched Summary: {}".format(res[0]))
-                session["summary_id"] = res[0][0]
-                session["summary"] = res[0][1]
+                session["summary_id"] = res[0]
+                session["summary"] = res[1]
 
             if "consent_given" not in session:
                 app.logger.info("Redirecting to consent form")
@@ -181,7 +181,7 @@ def login():
     return render_template("login.html", task_name=EXPERIMENT_TASK_NAME)
 
 
-@app.route("/logout")
+@app.route("/wyloguj_user")
 def logout():
     user_id = session["user_id"]
     cursor.execute("SELECT questionare_url FROM users WHERE user_id=%s", user_id)
