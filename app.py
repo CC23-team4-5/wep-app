@@ -11,13 +11,8 @@ CC23_DB_USERNAME = os.getenv("CC23_DB_USERNAME")
 CC23_DB_PASSWORD = os.getenv("CC23_DB_PASSWORD")
 
 # Connect to SQL Server
-conn = pymssql.connect(
-    server="cc23-team4-5-mssql-server.database.windows.net",
-    user="{}@cc23-team4-5-mssql-server".format(CC23_DB_USERNAME),
-    password=CC23_DB_PASSWORD,
-    database="cc23-team4-5-mssql-database",
-)
-cursor = conn.cursor()
+global conn, cursor
+
 
 MODEL_SERVICE_URL = os.environ.get("MODEL_HOST", "http://localhost:8081")
 MICROTASK_NAMES = deque([("Extract"), ("Produce"), ("Verify")])
@@ -28,28 +23,56 @@ additional_infos = deque()
 
 original_texts = {}
 
+def open_connections():
+    global conn, cursor
+    app.logger.debug("Opening MSSQL connection")
+    conn = pymssql.connect(
+    server="cc23-team4-5-mssql-server.database.windows.net",
+    user="{}@cc23-team4-5-mssql-server".format(CC23_DB_USERNAME),
+    password=CC23_DB_PASSWORD,
+    database="cc23-team4-5-mssql-database",
+    )
+    
+    cursor = conn.cursor()
+    app.logger.debug("MSSQL connection is opened")
+
+
+def close_connections():
+    app.logger.debug("Closing MSSQL connection")
+    cursor.close()
+    conn.close()
+    app.logger.debug("MSSQL connection is closed")
+
+def clear_user_session():
+    session.clear()
+    app.logger.info("User session is cleared")
 
 def read_original_texts():
     global original_texts
-
+    app.logger.debug("Reading original texts")
     for i in range(1, 23):
         file_path = "./data/original_texts/{}/original_text.txt".format(str(i))
         with open(file_path, "r") as file:
             original_texts[i] = file.read()
+    
+    app.logger.debug("Original texts are read")
 
 
 @app.route("/extract")
 def extract():
+    app.logger.debug("Routing to Extract")
     return perform_task("Extract")
 
 
 @app.route("/produce")
 def produce():
+    app.logger.debug("Routing to Produce")
     return perform_task("Produce")
 
 
 @app.route("/verify")
 def verify():
+    app.logger.debug("Routing to Verify")
     return perform_task("Verify")
 
 
@@ -57,9 +80,13 @@ def perform_task(task_name):
     global original_texts
 
     if "user_id" not in session:
+        app.logger.debug("[perform_task] User not in session")
         return redirect(url_for("login"))
 
+    app.logger.info("[perform_task] User {} in session performing task {} on text {}".format(session["user_id"], task_name, session["text_id"]))
+
     if task_name == "Extract":
+        app.logger.debug("[perform_task] template {}".format(task_name))
         return render_template(
             "extract.html",
             microtask_name=session["task_id"],
@@ -67,6 +94,7 @@ def perform_task(task_name):
             user_answer="User Answer",
         )
     elif task_name == "Produce":
+        app.logger.debug("[perform_task] template {}".format(task_name))
         return render_template(
             "produce.html",
             microtask_name=session["task_id"],
@@ -75,6 +103,7 @@ def perform_task(task_name):
             user_answer="User Answer",
         )
     else:
+        app.logger.debug("[perform_task] template {}".format(task_name))
         return render_template(
             "verify.html",
             microtask_name=session["task_id"],
@@ -98,8 +127,7 @@ def login():
         user = cursor.fetchone()
 
         if user:
-            print("***************** USER *****************")
-            print(user)
+            app.logger.info("User {} logged in".format(user_id))
 
             session["user_id"] = user[0]
             session["task_id"] = user[1]
@@ -126,28 +154,33 @@ def login():
             session["summary"] = res[idx][1]
 
             if "consent_given" not in session:
+                app.logger.info("Redirecting to consent form")
                 return redirect(url_for("consent_form"))
 
             return redirect(url_for(session["task_id"]))
-
+        app.logger.error("User {} not found".format(user_id))
         return "User not found", 400
     return render_template("login.html")
 
 
 @app.route("/logout")
 def logout():
-    user_id = session.get("user_id")
+    user_id = session["user_id"]
     cursor.execute("SELECT questionare_url FROM users WHERE user_id=%s", user_id)
     url = cursor.fetchone()[0]
-    session.clear()  # Clear the session
+    clear_user_session()
+    close_connections()
+    app.logger.info("User {} logged out".format(user_id))
     return render_template("logout.html", user_id=user_id, url=url)
 
 
 def remove_user_data(user_id):
+    app.logger.warning("Removing user data for user {}".format(user_id))
     cursor.execute("DELETE FROM key_features WHERE user_id=%s", user_id)
     cursor.execute("DELETE FROM summaries WHERE user_id=%s", user_id)
     cursor.execute("DELETE FROM validations WHERE user_id=%s", user_id)
     conn.commit()
+    app.logger.warning("User data for user {} removed".format(user_id))
 
 
 @app.route("/revoke-consent")
@@ -155,15 +188,19 @@ def revoke_consent():
     # Store the user_id to clear session later
     user_id = session["user_id"]
 
+    app.logger.warning("User {} removed consent".format(user_id))
     cursor.execute(
         "UPDATE users SET consent_given = 0 WHERE user_id=%s", session["user_id"]
     )
     conn.commit()
+    cursor.execute("SELECT revoke_consent_code FROM users WHERE user_id=%s", user_id)
+    revoke_consent_code = cursor.fetchone()[0]
+    app.logger.debug("Revoke consent code: {}".format(revoke_consent_code))
     
     remove_user_data(session["user_id"])
-    session.clear()
-
-    return render_template("revoked.html", user_id=user_id)
+    clear_user_session()
+    close_connections()
+    return render_template("revoked.html", user_id=user_id, revoke_consent_code=revoke_consent_code)
 
 
 @app.route("/give-consent")
@@ -172,12 +209,14 @@ def give_consent():
         "UPDATE users SET consent_given = 1 WHERE user_id=%s", session["user_id"]
     )
     conn.commit()
+    app.logger.info("User {} gave consent".format(session["user_id"]))
     return redirect(url_for(session["task_id"]))
 
 
 @app.route("/consent-form", methods=["GET", "POST"])
 def consent_form():
     if request.method == "POST":
+        app.logger.debug("Consent form submitted")
         # handle the post request here, such as saving consent form data
         return redirect(
             url_for("task_route")
@@ -187,6 +226,8 @@ def consent_form():
 
 @app.route("/")
 def index():
+    app.logger.info("App Started!")
+    open_connections()
     read_original_texts()
 
     if "user_id" not in session:
@@ -202,7 +243,7 @@ def next_task():
     MICROTASK_NAMES.rotate(-1)
     task_id = original_texts[0][0]
     user_answer = user_answers.get(task_id, "")
-    print(original_texts[0][2], additional_infos[0][2], MICROTASK_NAMES[0])
+    # print(original_texts[0][2], additional_infos[0][2], MICROTASK_NAMES[0])
     return jsonify(
         {
             "task_description": original_texts[0][2],
@@ -215,15 +256,19 @@ def next_task():
 
 @app.route("/submit", methods=["POST"])
 def submit():
+    app.logger.debug("Received POST request to /submit")
     answer = request.form.get("answer")
     if not answer:
+        app.logger.warning("Answer not provided.")
         return jsonify({"error": "Answer not provided."}), 401
 
-    print("============ ANSWER ============")
-    print(answer)
-    print(session["task_id"])
+    # print("============ ANSWER ============")
+    # print(answer)
+    # print(session["task_id"])
+    app.logger.info("User {} submitted answer {}".format(session["user_id"], answer))
 
     if session["task_id"] == "extract":
+        app.logger.debug("Merging into key_features...")
         cursor.execute(
             """
             MERGE INTO key_features AS Target
@@ -237,7 +282,9 @@ def submit():
             (session["text_id"], session["user_id"], answer, answer),
         )
         conn.commit()
+        app.logger.debug("Merge into key_features completed!")
     elif session["task_id"] == "produce":
+        app.logger.debug("Merging into summaries...")
         cursor.execute(
             """
             MERGE INTO summaries AS Target
@@ -251,7 +298,9 @@ def submit():
             (session["text_id"], session["user_id"], session["kf_id"], answer, answer),
         )
         conn.commit()
+        app.logger.debug("Merge into summaries completed!")
     elif session["task_id"] == "verify":
+        app.logger.debug("Merging into validations...")
         cursor.execute(
             """
             MERGE INTO validations AS Target
@@ -272,6 +321,7 @@ def submit():
             ),
         )
         conn.commit()
+        app.logger.debug("Merge into validations completed!")
     else:
         return jsonify({"error": "task_id not recognized."}), 402
 

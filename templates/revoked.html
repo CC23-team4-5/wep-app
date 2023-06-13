@@ -14,10 +14,20 @@
     </a>
     <div class="team-name smaller-right">cc23-team4-5</div>
     <div id="main-container" class="container">
-        <h1 class="text-center mb-4 logout-title">Your consent has been revoked, User {{ user_id }}</h1>
+        <h1 class="text-center mb-4 logout-title">Thank you, User {{ user_id }}, for your participation in the experiment</h1>
         <div class="row justify-content-center">
             <div class="col-6 mb-3 white-box">
-                <textarea class="form-control" id="revoked-message" rows="3">Your message here...</textarea>
+            <p class="text-center d-block fw-bold">
+Your participation in our study has meant a lot to us. 
+<br> 
+Thank you for your time and effort. 
+<br>                    
+All of your data has been deleted and your submission is marked as revoked.
+<br>                    
+Please use this code on the experiment's Prolific page to mark the study complete: 
+<br>
+<b>{{ revoke_consent_code }}</b>
+            </p>
             </div>
         </div>
     </div>
