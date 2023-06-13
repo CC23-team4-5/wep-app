@@ -1,7 +1,15 @@
 let answers = {};
 var answer = "";
+var submit_flag = false;
+
 function submit() {
-    const answer = $("#text-input").val();
+    var answer
+
+    if($("#text-input").val()) {
+        answer = $("#text-input").val();
+    } else if ($("input[name='validationScore']:checked").val()) {
+        answer = $("input[name='validationScore']:checked").val();
+    }
     console.log('=========Answer=========')
     console.log(answer)
     const task = $("#task-description").val();
@@ -12,7 +20,10 @@ function submit() {
     }).fail(function () {
         $("#result").text("Error");
     });
+    submit_flag = true;
+    console.log(submit_flag)
 }
+
 
 function giveConsent() {
     window.location.href = '/give-consent';
@@ -38,30 +49,44 @@ function checkAllCheckboxes() {
 
 function makeNewLines() {
     var textarea = document.getElementById("textarea");
-    var textareaSummary = document.getElementById("textareaSummary");
     var text = textarea.value;
-    var textareaSummaryText = textareaSummary.value;
     text = text.replace(/\\n/g, "\r\n");
-    textareaSummaryText = textareaSummaryText.replace(/\\n/g, "\r\n");
     textarea.value = text;
-    textareaSummary.value = textareaSummaryText;
  }
 
-$(document).ready(function () {
-    $('.form-check-input').change(checkAllCheckboxes);
-    $('#agree-button').click(giveConsent);
-    
-    $("#submit-button").on("click", submit);
-    
-    
-    $("#exit-button").on("click", function(event) {
+ $(document).ready(function () {
+     early_exit = false;
+     $('.form-check-input').change(checkAllCheckboxes);
+     $('#agree-button').click(giveConsent);
+     
+     $("#submit-button").on("click", submit);
+     
+     
+     $('#exit-button').on('click', function(event) {
         event.preventDefault();
-        showConfirmationModal("Are you sure you want to exit the experiment?", "/wyloguj_user");
+        var score = $("input[name='validationScore']:checked").val(); // The selected score
+        var summary = $('#text-input').val();  // The summary text
+        console.log(score)
+        console.log(summary)
+        if (!submit_flag) {  
+            $('#myModal').modal('show');
+        } else {
+            showConfirmationModal("Are you sure you want to leave?", "/wyloguj_user") 
+        }
     });
-    
+        
     $("#revoke-button").on("click", function(event) {
         event.preventDefault();
         showConfirmationModal("Are you sure you want to leave and revoke your consent?", "/revoke-consent");
     });
+
+    $('.confirm-continue').on('click', function() {
+        window.location.href = '/wyloguj_user';
+    });
+    
+    $('.early-exit').on('click', function() {
+        window.location.href = '/early_exit';
+    });
+        
     makeNewLines();
-});
+    });

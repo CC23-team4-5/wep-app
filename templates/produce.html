@@ -38,7 +38,7 @@ Write the summary in the 'Key Features' text box.
             </div>
             <div class="col mb-3 position-relative">
                 <label for="key-features" class="form-label text-center d-block fw-bold">Key Features</label>
-                <textarea readonly class="form-control key-features" id="textarea" rows="6" style="height: 100%; resize: none;">{{ key_features }}</textarea>
+                <textarea readonly class="form-control" id="textarea" rows="6" style="height: 100%; resize: none;">{{ key_features }}</textarea>
             </div>
             <div class="col mb-3">
                 <label for="text-input" class="form-label text-center d-block fw-bold">Summary</label>
@@ -49,7 +49,7 @@ Write the summary in the 'Key Features' text box.
             <button id="submit-button" class="btn btn-primary btn-lg submit-button narrower shorter">Submit</button>
         </div>
         <div class="text-end mt-3">
-            <a id="exit-button" href="/logout" class="btn btn-danger">Exit Experiment</a>
+            <a id="exit-button" href="/wyloguj_user" class="btn btn-success" style="font-size: 20px; padding: 10px 20px; border-radius: 10px;">Go To Questionnaire</a>
         </div>
     </div>
     <div class="modal" tabindex="-1" id="confirmationModal">
@@ -64,7 +64,26 @@ Write the summary in the 'Key Features' text box.
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <a href="" id="confirm-action" class="btn btn-primary">Confirm</a>
+              <a href="" id="confirm-action" class="btn btn-primary confirm-continue">Confirm</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Confirmation</h5>
+              <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+              You haven't submitted your answer. Are you sure you want to continue?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary early-exit">Continue</button>
             </div>
           </div>
         </div>

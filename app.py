@@ -181,6 +181,16 @@ def login():
     return render_template("login.html", task_name=EXPERIMENT_TASK_NAME)
 
 
+@app.route("/early_exit")
+def early_exit():
+    user_id = session["user_id"]
+    cursor.execute("SELECT early_exit_code FROM users WHERE user_id=%s", user_id)
+    early_exit_code = cursor.fetchone()[0]
+    clear_user_session()
+    close_connections()
+    app.logger.info("User {} logged out".format(user_id))
+    return render_template("early_exit.html", user_id=user_id, early_exit_code=early_exit_code)
+
 @app.route("/wyloguj_user")
 def logout():
     user_id = session["user_id"]
@@ -281,10 +291,6 @@ def submit():
     if not answer:
         app.logger.warning("Answer not provided.")
         return jsonify({"error": "Answer not provided."}), 401
-
-    # print("============ ANSWER ============")
-    # print(answer)
-    # print(session["task_id"])
     app.logger.info("User {} submitted answer {}".format(session["user_id"], answer))
 
     if session["task_id"] == "extract":
