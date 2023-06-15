@@ -17,7 +17,7 @@
         <h1 class="text-center mb-4">Consent Form</h1>
         <div class="row justify-content-center">
             <div class="col-8 mb-3 white-box">
-                <textarea readonly class="form-control" id="consent-form" rows="10" readonly>
+                <textarea readonly class="form-control" id="consent-form" rows="10" style="margin-bottom: 3%";>
 You are being invited to participate in a research study about powering up crowdsourcing workflows by Large Language Models. This study is being executed by Garrett Allen, Zhiqiang Lei, Krzysztof Garbowicz, Eleni Papadopoulou, Alex de Los Santos Subirats and Stijn Ponsioen from the TU Delft, as part of the course Crowdsourcing Computing.
 
 The purpose of this research study is to gain insights into the effects of Large Language Models within crowdsourcing workflows. To gather these insights, you will be asked to perform one step of a text summarization process: Extract, Produce, or Verify. After finishing your task, you will be asked to complete a questionnaire regarding your experience completing the task. For your time to perform this task, you will be compensated via the Prolific platform.
@@ -28,14 +28,14 @@ After anonymization, your data will be archived so it can be used for future res
 
 By clicking the button below, you indicate your understanding of the above and consent to your participation in this study. At any time, you are able to revoke this consent and exit the study.
                 </textarea>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="" id="check7">
-                    <label class="form-check-label" for="check2">I agree to take part in this study.</label>
-                </div>
+                <div class="form-check mt-3 justify-content-between">
+                    <label class="form-check-label" for="check1">I agree to take part in this study.</label>
+                    <input class="form-check-input mr-2" type="checkbox" value="" id="check1" style="background-color: #3a833a;scale: 1.7;" required>
+                </div>                              
             </div>
         </div>
         <div class="text-center">
-            <button id="agree-button" class="btn btn-primary btn-lg" disabled>I Agree</button>
+            <button id="agree-button" class="btn btn-primary btn-lg" style="background-color: #3a833a;" disabled>I Agree</button>
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
