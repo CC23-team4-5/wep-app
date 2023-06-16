@@ -264,7 +264,7 @@ def index():
     read_original_texts()
 
     if "user_id" not in session:
-        app.logger.debg("User redirected to login page")
+        app.logger.debug("User redirected to login page")
         return redirect(url_for("login"))
 
     return redirect(url_for(session["task_id"]))
