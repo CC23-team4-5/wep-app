@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import os
 import pymssql
+import datetime
 from collections import deque
 from random import randint
 
@@ -92,6 +93,12 @@ def perform_task(task_name):
             session["user_id"], task_name, session["text_id"]
         )
     )
+
+    # Log entrance_timestamp
+    entrance_timestamp = datetime.datetime.now()
+    cursor.execute("UPDATE users SET entrance_timestamp=%s WHERE user_id=%s", (entrance_timestamp, session["user_id"]))
+    conn.commit()
+    app.logger.debug("[perform_task] entrance_timestamp: {}".format(entrance_timestamp))
 
     if task_name == "extract":
         app.logger.debug("[perform_task] template {}".format(task_name))
@@ -189,6 +196,13 @@ def early_exit():
     user_id = session["user_id"]
     cursor.execute("SELECT early_exit_code FROM users WHERE user_id=%s", user_id)
     early_exit_code = cursor.fetchone()[0]
+
+    # Log exit_timestamp
+    exit_timestamp = datetime.datetime.now()
+    cursor.execute("UPDATE users SET exit_timestamp=%s WHERE user_id=%s", (exit_timestamp, session["user_id"]))
+    conn.commit()
+    app.logger.debug("[early_exit] exit_timestamp: {}".format(exit_timestamp))
+
     clear_user_session()
     close_connections()
     app.logger.info("User {} logged out".format(user_id))
@@ -224,9 +238,16 @@ def revoke_consent():
         "UPDATE users SET consent_given = 0 WHERE user_id=%s", session["user_id"]
     )
     conn.commit()
+
     cursor.execute("SELECT revoke_consent_code FROM users WHERE user_id=%s", user_id)
     revoke_consent_code = cursor.fetchone()[0]
     app.logger.debug("Revoke consent code: {}".format(revoke_consent_code))
+
+    # Log exit_timestamp
+    exit_timestamp = datetime.datetime.now()
+    cursor.execute("UPDATE users SET exit_timestamp=%s WHERE user_id=%s", (exit_timestamp, session["user_id"]))
+    conn.commit()
+    app.logger.debug("[revoke_consent] exit_timestamp: {}".format(exit_timestamp))
 
     remove_user_data(session["user_id"])
     clear_user_session()
@@ -296,6 +317,12 @@ def submit():
         app.logger.warning("Answer not provided.")
         return jsonify({"error": "Answer not provided."}), 401
     app.logger.info("User {} submitted answer {}".format(session["user_id"], answer))
+
+    # Log exit_timestamp
+    exit_timestamp = datetime.datetime.now()
+    cursor.execute("UPDATE users SET exit_timestamp=%s WHERE user_id=%s", (exit_timestamp, session["user_id"]))
+    conn.commit()
+    app.logger.debug("[submit] exit_timestamp: {}".format(exit_timestamp))
 
     if session["task_id"] == "extract":
         app.logger.debug("Merging into key_features...")
