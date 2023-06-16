@@ -56,7 +56,7 @@ def read_original_texts():
     global original_texts
     app.logger.debug("Reading original texts")
     for i in range(1, 23):
-        file_path = "./data/original_texts/{}/original_text.txt".format(str(i))
+        file_path = "./data/original_texts_verify_human/{}/original_text.txt".format(str(i))
         with open(file_path, "r") as file:
             original_texts[i] = file.read()
 
