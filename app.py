@@ -128,6 +128,7 @@ def login():
 
     if request.method == "POST":
         user_id = request.form.get("user_id")
+        app.logger.debug("UserID {} provided".format(user_id))
 
         cursor.execute(
             "SELECT text_id FROM users WHERE user_id IS NULL AND task_id=%s", EXPERIMENT_TASK_NAME,
@@ -155,6 +156,7 @@ def login():
                     "SELECT kf_id, key_features FROM key_features WHERE text_id=%s",
                     session["text_id"],
                 )
+
                 res = cursor.fetchone()
                 app.logger.debug("Fetched Key Features: {}".format(res))
                 session["kf_id"] = res[0]
@@ -166,6 +168,7 @@ def login():
                     "SELECT summary_id, summary FROM summaries WHERE kf_id=%s",
                     session["kf_id"],
                 )
+
                 res = cursor.fetchone()
                 app.logger.debug("Fetched Summary: {}".format(res[0]))
                 session["summary_id"] = res[0]
@@ -261,6 +264,7 @@ def index():
     read_original_texts()
 
     if "user_id" not in session:
+        app.logger.debg("User redirected to login page")
         return redirect(url_for("login"))
 
     return redirect(url_for(session["task_id"]))
