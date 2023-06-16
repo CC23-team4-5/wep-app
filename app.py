@@ -101,6 +101,7 @@ def perform_task(task_name):
     app.logger.debug("[perform_task] entrance_timestamp: {}".format(entrance_timestamp))
 
     if task_name == "extract":
+        close_connections()
         app.logger.debug("[perform_task] template {}".format(task_name))
         return render_template(
             "extract.html",
@@ -109,6 +110,7 @@ def perform_task(task_name):
             user_answer="User Answer",
         )
     elif task_name == "produce":
+        close_connections()
         app.logger.debug("[perform_task] template {}".format(task_name))
         return render_template(
             "produce.html",
@@ -118,6 +120,7 @@ def perform_task(task_name):
             user_answer="User Answer",
         )
     else:
+        close_connections()
         app.logger.debug("[perform_task] template {}".format(task_name))
         return render_template(
             "verify.html",
@@ -193,6 +196,7 @@ def login():
 
 @app.route("/early_exit")
 def early_exit():
+    open_connections()
     user_id = session["user_id"]
     cursor.execute("SELECT early_exit_code FROM users WHERE user_id=%s", user_id)
     early_exit_code = cursor.fetchone()[0]
@@ -230,6 +234,7 @@ def remove_user_data(user_id):
 
 @app.route("/revoke-consent")
 def revoke_consent():
+    open_connections()
     # Store the user_id to clear session later
     user_id = session["user_id"]
 
@@ -312,6 +317,7 @@ def next_task():
 @app.route("/submit", methods=["POST"])
 def submit():
     app.logger.debug("Received POST request to /submit")
+    open_connections()
     answer = request.form.get("answer")
     if not answer:
         app.logger.warning("Answer not provided.")
