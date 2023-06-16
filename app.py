@@ -101,7 +101,7 @@ def perform_task(task_name):
     app.logger.debug("[perform_task] entrance_timestamp: {}".format(entrance_timestamp))
 
     if task_name == "extract":
-        close_connections()
+        # close_connections()
         app.logger.debug("[perform_task] template {}".format(task_name))
         return render_template(
             "extract.html",
@@ -110,7 +110,7 @@ def perform_task(task_name):
             user_answer="User Answer",
         )
     elif task_name == "produce":
-        close_connections()
+        # close_connections()
         app.logger.debug("[perform_task] template {}".format(task_name))
         return render_template(
             "produce.html",
@@ -120,7 +120,7 @@ def perform_task(task_name):
             user_answer="User Answer",
         )
     else:
-        close_connections()
+        # close_connections()
         app.logger.debug("[perform_task] template {}".format(task_name))
         return render_template(
             "verify.html",
@@ -196,7 +196,7 @@ def login():
 
 @app.route("/early_exit")
 def early_exit():
-    open_connections()
+    # open_connections()
     user_id = session["user_id"]
     cursor.execute("SELECT early_exit_code FROM users WHERE user_id=%s", user_id)
     early_exit_code = cursor.fetchone()[0]
@@ -208,7 +208,7 @@ def early_exit():
     app.logger.debug("[early_exit] exit_timestamp: {}".format(exit_timestamp))
 
     clear_user_session()
-    close_connections()
+    # close_connections()
     app.logger.info("User {} logged out".format(user_id))
     return render_template("early_exit.html", user_id=user_id, early_exit_code=early_exit_code)
 
@@ -218,7 +218,7 @@ def logout():
     cursor.execute("SELECT questionare_url FROM users WHERE user_id=%s", user_id)
     url = cursor.fetchone()[0]
     clear_user_session()
-    close_connections()
+    # close_connections()
     app.logger.info("User {} logged out".format(user_id))
     return render_template("logout.html", user_id=user_id, url=url)
 
@@ -234,7 +234,7 @@ def remove_user_data(user_id):
 
 @app.route("/revoke-consent")
 def revoke_consent():
-    open_connections()
+    # open_connections()
     # Store the user_id to clear session later
     user_id = session["user_id"]
 
@@ -256,7 +256,7 @@ def revoke_consent():
 
     remove_user_data(session["user_id"])
     clear_user_session()
-    close_connections()
+    # close_connections()
     return render_template(
         "revoked.html", user_id=user_id, revoke_consent_code=revoke_consent_code
     )
@@ -286,7 +286,7 @@ def consent_form():
 @app.route("/")
 def index():
     app.logger.info("{} App Started!".format(EXPERIMENT_TASK_NAME))
-    open_connections()
+    # open_connections()
     read_original_texts()
 
     if "user_id" not in session:
@@ -317,7 +317,7 @@ def next_task():
 @app.route("/submit", methods=["POST"])
 def submit():
     app.logger.debug("Received POST request to /submit")
-    open_connections()
+    # open_connections()
     answer = request.form.get("answer")
     if not answer:
         app.logger.warning("Answer not provided.")
@@ -393,4 +393,5 @@ def submit():
 
 
 if __name__ == "__main__":
+    open_connections()
     app.run(host="0.0.0.0", port=8080, debug=True)
