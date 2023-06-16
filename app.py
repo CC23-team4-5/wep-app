@@ -140,10 +140,16 @@ def login():
         user_id = request.form.get("user_id")
         app.logger.debug("UserID {} provided".format(user_id))
 
+        print(user_id)
+        print(EXPERIMENT_TASK_NAME)
         cursor.execute(
-            "SELECT text_id FROM users WHERE user_id IS NULL AND task_id=%s", EXPERIMENT_TASK_NAME,
+            "SELECT text_id FROM users WHERE user_id IS NULL AND task_id=%s", (EXPERIMENT_TASK_NAME,)
         )
+        
         data = cursor.fetchone()
+
+        print(data)
+        
         app.logger.debug("Fetched text_id: {}".format(data[0]))
 
         cursor.execute(
