@@ -14,7 +14,16 @@ EXPERIMENT_TASK_NAME = os.getenv("EXPERIMENT_TASK_NAME")
 
 # Connect to SQL Server
 global conn, cursor
+print("Opening MSSQL connection")
+conn = pymssql.connect(
+        server="cc23-team4-5-mssql-server.database.windows.net",
+        user="{}@cc23-team4-5-mssql-server".format(CC23_DB_USERNAME),
+        password=CC23_DB_PASSWORD,
+        database="cc23-team4-5-mssql-database",
+)
 
+cursor = conn.cursor()
+print("MSSQL connection is opened")
 
 MODEL_SERVICE_URL = os.environ.get("MODEL_HOST", "http://localhost:8081")
 MICROTASK_NAMES = deque([("Extract"), ("Produce"), ("Verify")])
@@ -26,18 +35,18 @@ additional_infos = deque()
 original_texts = {}
 
 
-def open_connections():
-    global conn, cursor
-    app.logger.debug("Opening MSSQL connection")
-    conn = pymssql.connect(
-        server="cc23-team4-5-mssql-server.database.windows.net",
-        user="{}@cc23-team4-5-mssql-server".format(CC23_DB_USERNAME),
-        password=CC23_DB_PASSWORD,
-        database="cc23-team4-5-mssql-database",
-    )
+# def open_connections():
+#     global conn, cursor
+#     app.logger.debug("Opening MSSQL connection")
+#     conn = pymssql.connect(
+#         server="cc23-team4-5-mssql-server.database.windows.net",
+#         user="{}@cc23-team4-5-mssql-server".format(CC23_DB_USERNAME),
+#         password=CC23_DB_PASSWORD,
+#         database="cc23-team4-5-mssql-database",
+#     )
 
-    cursor = conn.cursor()
-    app.logger.debug("MSSQL connection is opened")
+#     cursor = conn.cursor()
+#     app.logger.debug("MSSQL connection is opened")
 
 
 def close_connections():
@@ -399,5 +408,4 @@ def submit():
 
 
 if __name__ == "__main__":
-    open_connections()
     app.run(host="0.0.0.0", port=8080, debug=True)
