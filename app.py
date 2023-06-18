@@ -162,7 +162,7 @@ def login():
         app.logger.debug("Fetched text_id: {}".format(data[0]))
 
         cursor.execute(
-            "UPDATE users SET user_id=%s WHERE text_id=%s AND task_id=%s", (user_id, data[0], EXPERIMENT_TASK_NAME)
+            "UPDATE users SET user_id=%s WHERE pk=( SELECT MIN(pk) from users WHERE text_id=%s AND task_id=%s)", (user_id, data[0], EXPERIMENT_TASK_NAME)
         )
         conn.commit()
         app.logger.info("User {} saved as the candidate for task {} on text {}".format(user_id, EXPERIMENT_TASK_NAME ,data[0]))
