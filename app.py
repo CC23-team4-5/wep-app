@@ -8,24 +8,23 @@ from random import randint
 app = Flask(__name__)
 app.secret_key = "your secret key"
 
-CC23_DB_USERNAME = os.getenv("CC23_DB_USERNAME")
-CC23_DB_PASSWORD = os.getenv("CC23_DB_PASSWORD")
-EXPERIMENT_TASK_NAME = os.getenv("EXPERIMENT_TASK_NAME")
+CC23_DB_USERNAME = os.getenv("CC23_DB_USERNAME", "db_username")
+CC23_DB_PASSWORD = os.getenv("CC23_DB_PASSWORD", "db_password")
+EXPERIMENT_TASK_NAME = os.getenv("EXPERIMENT_TASK_NAME", "extract")
 
 # Connect to SQL Server
-global conn, cursor
-print("Opening MSSQL connection")
-conn = pymssql.connect(
-        server="cc23-team4-5-mssql-server.database.windows.net",
-        user="{}@cc23-team4-5-mssql-server".format(CC23_DB_USERNAME),
-        password=CC23_DB_PASSWORD,
-        database="cc23-team4-5-mssql-database",
-)
+# global conn, cursor
+# print("Opening MSSQL connection")
+# conn = pymssql.connect(
+#         server="cc23-team4-5-mssql-server.database.windows.net",
+#         user="{}@cc23-team4-5-mssql-server".format(CC23_DB_USERNAME),
+#         password=CC23_DB_PASSWORD,
+#         database="cc23-team4-5-mssql-database",
+# )
 
-cursor = conn.cursor()
-print("MSSQL connection is opened")
+# cursor = conn.cursor()
+# print("MSSQL connection is opened")
 
-MODEL_SERVICE_URL = os.environ.get("MODEL_HOST", "http://localhost:8081")
 MICROTASK_NAMES = deque([("Extract"), ("Produce"), ("Verify")])
 
 
@@ -49,11 +48,11 @@ original_texts = {}
 #     app.logger.debug("MSSQL connection is opened")
 
 
-def close_connections():
-    app.logger.debug("Closing MSSQL connection")
-    cursor.close()
-    conn.close()
-    app.logger.debug("MSSQL connection is closed")
+# def close_connections():
+#     app.logger.debug("Closing MSSQL connection")
+#     cursor.close()
+#     conn.close()
+#     app.logger.debug("MSSQL connection is closed")
 
 
 def clear_user_session():
@@ -65,7 +64,7 @@ def read_original_texts():
     global original_texts
     app.logger.debug("Reading original texts")
     for i in range(1, 23):
-        file_path = "./data/original_texts_verify_human/{}/original_text.txt".format(str(i))
+        file_path = "./data/original_texts/{}/original_text.txt".format(str(i))
         with open(file_path, "r") as file:
             original_texts[i] = file.read()
 
@@ -105,8 +104,8 @@ def perform_task(task_name):
 
     # Log entrance_timestamp
     entrance_timestamp = datetime.datetime.now()
-    cursor.execute("UPDATE users SET entrance_timestamp=%s WHERE user_id=%s", (entrance_timestamp, session["user_id"]))
-    conn.commit()
+    # cursor.execute("UPDATE users SET entrance_timestamp=%s WHERE user_id=%s", (entrance_timestamp, session["user_id"]))
+    # conn.commit()
     app.logger.debug("[perform_task] entrance_timestamp: {}".format(entrance_timestamp))
 
     if task_name == "extract":
@@ -149,22 +148,19 @@ def login():
         user_id = request.form.get("user_id")
         app.logger.debug("UserID {} provided".format(user_id))
 
-        print(user_id)
-        print(EXPERIMENT_TASK_NAME)
-        cursor.execute(
-            "SELECT text_id FROM users WHERE user_id IS NULL AND task_id=%s", (EXPERIMENT_TASK_NAME,)
-        )
+        # cursor.execute(
+        #     "SELECT text_id FROM users WHERE user_id IS NULL AND task_id=%s", (EXPERIMENT_TASK_NAME,)
+        # )
         
-        data = cursor.fetchone()
-
-        print(data)
+        # data = cursor.fetchone()
+        data = [13]
         
         app.logger.debug("Fetched text_id: {}".format(data[0]))
 
-        cursor.execute(
-            "UPDATE users SET user_id=%s WHERE pk=( SELECT MIN(pk) from users WHERE text_id=%s AND task_id=%s)", (user_id, data[0], EXPERIMENT_TASK_NAME)
-        )
-        conn.commit()
+        # cursor.execute(
+        #     "UPDATE users SET user_id=%s WHERE pk=( SELECT MIN(pk) from users WHERE text_id=%s AND task_id=%s)", (user_id, data[0], EXPERIMENT_TASK_NAME)
+        # )
+        # conn.commit()
         app.logger.info("User {} saved as the candidate for task {} on text {}".format(user_id, EXPERIMENT_TASK_NAME ,data[0]))
 
 
@@ -177,24 +173,24 @@ def login():
 
             if session["task_id"] == "produce" or session["task_id"] == "verify":
                 # Fetch Key Features
-                cursor.execute(
-                    "SELECT kf_id, key_features FROM key_features WHERE text_id=%s",
-                    session["text_id"],
-                )
+                # cursor.execute(
+                #     "SELECT kf_id, key_features FROM key_features WHERE text_id=%s",
+                #     session["text_id"],
+                # )
 
-                res = cursor.fetchone()
+                # res = cursor.fetchone()
                 app.logger.debug("Fetched Key Features: {}".format(res))
                 session["kf_id"] = res[0]
                 session["key_features"] = res[1]
 
             if session["task_id"] == "verify":
                 # Fetch Summaries
-                cursor.execute(
-                    "SELECT summary_id, summary FROM summaries WHERE kf_id=%s",
-                    session["kf_id"],
-                )
+                # cursor.execute(
+                #     "SELECT summary_id, summary FROM summaries WHERE kf_id=%s",
+                #     session["kf_id"],
+                # )
 
-                res = cursor.fetchone()
+                # res = cursor.fetchone()
                 app.logger.debug("Fetched Summary: {}".format(res[0]))
                 session["summary_id"] = res[0]
                 session["summary"] = res[1]
@@ -213,13 +209,14 @@ def login():
 def early_exit():
     # open_connections()
     user_id = session["user_id"]
-    cursor.execute("SELECT early_exit_code FROM users WHERE user_id=%s", user_id)
-    early_exit_code = cursor.fetchone()[0]
+    # cursor.execute("SELECT early_exit_code FROM users WHERE user_id=%s", user_id)
+    # early_exit_code = cursor.fetchone()[0]
+    early_exit_code = "https://early_exit_code"
 
     # Log exit_timestamp
     exit_timestamp = datetime.datetime.now()
-    cursor.execute("UPDATE users SET exit_timestamp=%s WHERE user_id=%s", (exit_timestamp, session["user_id"]))
-    conn.commit()
+    # cursor.execute("UPDATE users SET exit_timestamp=%s WHERE user_id=%s", (exit_timestamp, session["user_id"]))
+    # conn.commit()
     app.logger.debug("[early_exit] exit_timestamp: {}".format(exit_timestamp))
 
     clear_user_session()
@@ -230,8 +227,9 @@ def early_exit():
 @app.route("/wyloguj_user")
 def logout():
     user_id = session["user_id"]
-    cursor.execute("SELECT questionare_url FROM users WHERE user_id=%s", user_id)
-    url = cursor.fetchone()[0]
+    # cursor.execute("SELECT questionare_url FROM users WHERE user_id=%s", user_id)
+    # url = cursor.fetchone()[0]
+    url = "https://REDIRECT_URL"
     clear_user_session()
     # close_connections()
     app.logger.info("User {} logged out".format(user_id))
@@ -240,10 +238,10 @@ def logout():
 
 def remove_user_data(user_id):
     app.logger.warning("Removing user data for user {}".format(user_id))
-    cursor.execute("DELETE FROM key_features WHERE user_id=%s", user_id)
-    cursor.execute("DELETE FROM summaries WHERE user_id=%s", user_id)
-    cursor.execute("DELETE FROM validations WHERE user_id=%s", user_id)
-    conn.commit()
+    # cursor.execute("DELETE FROM key_features WHERE user_id=%s", user_id)
+    # cursor.execute("DELETE FROM summaries WHERE user_id=%s", user_id)
+    # cursor.execute("DELETE FROM validations WHERE user_id=%s", user_id)
+    # conn.commit()
     app.logger.warning("User data for user {} removed".format(user_id))
 
 
@@ -254,19 +252,20 @@ def revoke_consent():
     user_id = session["user_id"]
 
     app.logger.warning("User {} removed consent".format(user_id))
-    cursor.execute(
-        "UPDATE users SET consent_given = 0 WHERE user_id=%s", session["user_id"]
-    )
-    conn.commit()
+    # cursor.execute(
+    #     "UPDATE users SET consent_given = 0 WHERE user_id=%s", session["user_id"]
+    # )
+    # conn.commit()
 
-    cursor.execute("SELECT revoke_consent_code FROM users WHERE user_id=%s", user_id)
-    revoke_consent_code = cursor.fetchone()[0]
+    # cursor.execute("SELECT revoke_consent_code FROM users WHERE user_id=%s", user_id)
+    # revoke_consent_code = cursor.fetchone()[0]
+    revoke_consent_code = "Revoke_consent_code"
     app.logger.debug("Revoke consent code: {}".format(revoke_consent_code))
 
     # Log exit_timestamp
     exit_timestamp = datetime.datetime.now()
-    cursor.execute("UPDATE users SET exit_timestamp=%s WHERE user_id=%s", (exit_timestamp, session["user_id"]))
-    conn.commit()
+    # cursor.execute("UPDATE users SET exit_timestamp=%s WHERE user_id=%s", (exit_timestamp, session["user_id"]))
+    # conn.commit()
     app.logger.debug("[revoke_consent] exit_timestamp: {}".format(exit_timestamp))
 
     remove_user_data(session["user_id"])
@@ -279,10 +278,10 @@ def revoke_consent():
 
 @app.route("/give-consent")
 def give_consent():
-    cursor.execute(
-        "UPDATE users SET consent_given = 1 WHERE user_id=%s", session["user_id"]
-    )
-    conn.commit()
+    # cursor.execute(
+    #     "UPDATE users SET consent_given = 1 WHERE user_id=%s", session["user_id"]
+    # )
+    # conn.commit()
     app.logger.info("User {} gave consent".format(session["user_id"]))
     return redirect(url_for(session["task_id"]))
 
@@ -311,24 +310,6 @@ def index():
     return redirect(url_for(session["task_id"]))
 
 
-@app.route("/next_task")
-def next_task():
-    original_texts.rotate(-1)
-    additional_infos.rotate(-1)
-    MICROTASK_NAMES.rotate(-1)
-    task_id = original_texts[0][0]
-    user_answer = user_answers.get(task_id, "")
-    # print(original_texts[0][2], additional_infos[0][2], MICROTASK_NAMES[0])
-    return jsonify(
-        {
-            "task_description": original_texts[0][2],
-            "additional_info": additional_infos[0][2],
-            "microtask_name": MICROTASK_NAMES[0],
-            "user_answer": user_answer,
-        }
-    )
-
-
 @app.route("/submit", methods=["POST"])
 def submit():
     app.logger.debug("Received POST request to /submit")
@@ -341,65 +322,65 @@ def submit():
 
     # Log exit_timestamp
     exit_timestamp = datetime.datetime.now()
-    cursor.execute("UPDATE users SET exit_timestamp=%s WHERE user_id=%s", (exit_timestamp, session["user_id"]))
-    conn.commit()
+    # cursor.execute("UPDATE users SET exit_timestamp=%s WHERE user_id=%s", (exit_timestamp, session["user_id"]))
+    # conn.commit()
     app.logger.debug("[submit] exit_timestamp: {}".format(exit_timestamp))
 
     if session["task_id"] == "extract":
         app.logger.debug("Merging into key_features...")
         app.logger.warning((session["text_id"], session["user_id"], answer, answer))
-        cursor.execute(
-            """
-            MERGE INTO key_features AS Target
-            USING (SELECT %s as text_id, %s as user_id) AS Source
-            ON Target.text_id = Source.text_id AND Target.user_id = Source.user_id 
-            WHEN MATCHED THEN
-                UPDATE SET key_features = %s
-            WHEN NOT MATCHED THEN
-                INSERT (text_id, user_id, key_features) VALUES (Source.text_id, Source.user_id, %s);
-            """,
-            (session["text_id"], session["user_id"], answer, answer),
-        )
-        conn.commit()
+        # cursor.execute(
+        #     """
+        #     MERGE INTO key_features AS Target
+        #     USING (SELECT %s as text_id, %s as user_id) AS Source
+        #     ON Target.text_id = Source.text_id AND Target.user_id = Source.user_id 
+        #     WHEN MATCHED THEN
+        #         UPDATE SET key_features = %s
+        #     WHEN NOT MATCHED THEN
+        #         INSERT (text_id, user_id, key_features) VALUES (Source.text_id, Source.user_id, %s);
+        #     """,
+        #     (session["text_id"], session["user_id"], answer, answer),
+        # )
+        # conn.commit()
         app.logger.debug("Merge into key_features completed!")
     elif session["task_id"] == "produce":
         app.logger.debug("Merging into summaries...")
-        cursor.execute(
-            """
-            MERGE INTO summaries AS Target
-            USING (SELECT %s as text_id, %s as user_id, %s as kf_id) AS Source
-            ON Target.text_id = Source.text_id AND Target.user_id = Source.user_id AND Target.kf_id = Source.kf_id
-            WHEN MATCHED THEN
-                UPDATE SET summary = %s
-            WHEN NOT MATCHED THEN
-                INSERT (text_id, user_id, kf_id, summary) VALUES (Source.text_id, Source.user_id, Source.kf_id, %s);
-            """,
-            (session["text_id"], session["user_id"], session["kf_id"], answer, answer),
-        )
-        conn.commit()
+        # cursor.execute(
+        #     """
+        #     MERGE INTO summaries AS Target
+        #     USING (SELECT %s as text_id, %s as user_id, %s as kf_id) AS Source
+        #     ON Target.text_id = Source.text_id AND Target.user_id = Source.user_id AND Target.kf_id = Source.kf_id
+        #     WHEN MATCHED THEN
+        #         UPDATE SET summary = %s
+        #     WHEN NOT MATCHED THEN
+        #         INSERT (text_id, user_id, kf_id, summary) VALUES (Source.text_id, Source.user_id, Source.kf_id, %s);
+        #     """,
+        #     (session["text_id"], session["user_id"], session["kf_id"], answer, answer),
+        # )
+        # conn.commit()
         app.logger.debug("Merge into summaries completed!")
     elif session["task_id"] == "verify":
         app.logger.debug("Merging into validations...")
-        cursor.execute(
-            """
-            MERGE INTO validations AS Target
-            USING (SELECT %s as text_id, %s as user_id, %s as kf_id, %s as summary_id) AS Source
-            ON Target.text_id = Source.text_id AND Target.user_id = Source.user_id AND Target.kf_id = Source.kf_id AND Target.summary_id = Source.summary_id
-            WHEN MATCHED THEN
-                UPDATE SET validation = %s
-            WHEN NOT MATCHED THEN
-                INSERT (text_id, user_id, kf_id, summary_id, validation) VALUES (Source.text_id, Source.user_id, Source.kf_id, Source.summary_id, %s);
-            """,
-            (
-                session["text_id"],
-                session["user_id"],
-                session["kf_id"],
-                session["summary_id"],
-                answer,
-                answer,
-            ),
-        )
-        conn.commit()
+        # cursor.execute(
+        #     """
+        #     MERGE INTO validations AS Target
+        #     USING (SELECT %s as text_id, %s as user_id, %s as kf_id, %s as summary_id) AS Source
+        #     ON Target.text_id = Source.text_id AND Target.user_id = Source.user_id AND Target.kf_id = Source.kf_id AND Target.summary_id = Source.summary_id
+        #     WHEN MATCHED THEN
+        #         UPDATE SET validation = %s
+        #     WHEN NOT MATCHED THEN
+        #         INSERT (text_id, user_id, kf_id, summary_id, validation) VALUES (Source.text_id, Source.user_id, Source.kf_id, Source.summary_id, %s);
+        #     """,
+        #     (
+        #         session["text_id"],
+        #         session["user_id"],
+        #         session["kf_id"],
+        #         session["summary_id"],
+        #         answer,
+        #         answer,
+        #     ),
+        # )
+        # conn.commit()
         app.logger.debug("Merge into validations completed!")
     else:
         return jsonify({"error": "task_id not recognized."}), 402
